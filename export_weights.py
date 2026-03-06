@@ -2,7 +2,9 @@ import numpy as np
 
 weights = np.load('weights.npy', allow_pickle=True).item()
 
-with open('weights.bin', 'wb') as f:
+with open('iris_weights.bin', 'wb') as f:
+    arch = np.array([3, 4, 8, 3], dtype=np.int32)
+    arch.tofile(f)
     weights['w1'].astype(np.float32).tofile(f)
     weights['b1'].astype(np.float32).tofile(f)
     weights['w2'].astype(np.float32).tofile(f)
@@ -10,6 +12,4 @@ with open('weights.bin', 'wb') as f:
     weights['scaler_mean'].astype(np.float32).tofile(f)
     weights['scaler_std'].astype(np.float32).tofile(f)
 
-print("Exported weights.bin successfully")
-print(f"w1 shape: {weights['w1'].shape}")
-print(f"w2 shape: {weights['w2'].shape}")
+print("Exported iris_weights.bin")
