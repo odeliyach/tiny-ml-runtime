@@ -1,21 +1,21 @@
 # Tiny ML Runtime in C
 
-A generic neural network inference engine implemented in pure C —
+A generic neural network inference engine implemented in pure C-
 no frameworks, no dependencies.
 
 Trains in Python (PyTorch), exports weights, runs inference in C.
-Supports any architecture — tested on Iris and MNIST.
+Supports any architecture - tested on Iris and MNIST.
 
 ## Benchmark Results
 
-### Iris (4 → 8 → 3) — tiny network
+### Iris (4 → 8 → 3) - tiny network
 | Runtime        | Predictions/sec | Time (1M iterations) |
 |----------------|-----------------|----------------------|
 | Pure C         | 2,732,240       | 0.366 seconds        |
 | PyTorch Python | 10,596          | 94.374 seconds       |
 | **Speedup**    | **258x faster** |                      |
 
-### MNIST (784 → 128 → 10) — larger network
+### MNIST (784 → 128 → 10) - larger network
 | Runtime        | Predictions/sec | Time (100K iterations) |
 |----------------|-----------------|------------------------|
 | Pure C         | 4,244           | 23.563 seconds         |
@@ -24,7 +24,7 @@ Supports any architecture — tested on Iris and MNIST.
 
 ### Why the difference?
 
-On **Iris**, the network is tiny — PyTorch's Python overhead dominates.
+On **Iris**, the network is tiny - PyTorch's Python overhead dominates.
 C wins because it has zero overhead.
 
 On **MNIST**, the matrices are large (W1 = 128×784 = 100K multiplications
@@ -127,7 +127,7 @@ gcc inference.c -o inference -lm
 ## Why I built this
 
 I wanted to understand what PyTorch actually does under the hood,
-so I implemented neural network inference from scratch in C —
+so I implemented neural network inference from scratch in C -
 matrix multiplication, ReLU, Softmax, the full forward pass.
 
 The benchmark results tell an interesting story: C is 258x faster
