@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <time.h>
 
 /* ── Copy of core types and functions from inference.c ────────────── */
 
@@ -63,7 +62,7 @@ void softmax(float *x, int size) {
 }
 
 int predict(Network *net, float *input, int verbose) {
-    float normalized[784];
+    float normalized[784];  /* 784 = max input size (28×28 MNIST) */
     if (net->has_scaler) {
         for (int i = 0; i < net->layer_sizes[0]; i++)
             normalized[i] = (input[i] - net->scaler_mean[i]) / net->scaler_std[i];
@@ -300,37 +299,6 @@ void test_predict_with_scaler(void) {
     ASSERT(pred == 0, "scaler net: [6,4] → scaled [1,-1] → class 0");
 }
 
-void test_load_and_predict_iris(void) {
-    printf("test_load_and_predict_iris\n");
-
-    /* Try loading iris weights — skip if file not present */
-    FILE *f = fopen("iris_weights.bin", "rb");
-    if (!f) {
-        printf("  SKIP: iris_weights.bin not found\n");
-        return;
-    }
-    fclose(f);
-
-    Network net;
-    int load_weights(Network *net, const char *filename);
-    int ok = load_weights(&net, "iris_weights.bin");
-    ASSERT(ok == 1, "load iris_weights.bin succeeds");
-
-    if (ok) {
-        ASSERT(net.num_layers == 3, "iris has 3 layers");
-        ASSERT(net.layer_sizes[0] == 4,  "iris input size == 4");
-        ASSERT(net.layer_sizes[1] == 8,  "iris hidden size == 8");
-        ASSERT(net.layer_sizes[2] == 3,  "iris output size == 3");
-
-        /* Setosa sample — should predict class 0 */
-        float setosa[] = {5.1f, 3.5f, 1.4f, 0.2f};
-        int pred = predict(&net, setosa, 0);
-        ASSERT(pred == 0, "iris: setosa → class 0");
-
-        free_network(&net);
-    }
-}
-
 int load_weights(Network *net, const char *filename) {
     FILE *f = fopen(filename, "rb");
     if (!f) return 0;
@@ -362,6 +330,36 @@ int load_weights(Network *net, const char *filename) {
 
     fclose(f);
     return 1;
+}
+
+void test_load_and_predict_iris(void) {
+    printf("test_load_and_predict_iris\n");
+
+    /* Try loading iris weights — skip if file not present */
+    FILE *f = fopen("iris_weights.bin", "rb");
+    if (!f) {
+        printf("  SKIP: iris_weights.bin not found\n");
+        return;
+    }
+    fclose(f);
+
+    Network net;
+    int ok = load_weights(&net, "iris_weights.bin");
+    ASSERT(ok == 1, "load iris_weights.bin succeeds");
+
+    if (ok) {
+        ASSERT(net.num_layers == 3, "iris has 3 layers");
+        ASSERT(net.layer_sizes[0] == 4,  "iris input size == 4");
+        ASSERT(net.layer_sizes[1] == 8,  "iris hidden size == 8");
+        ASSERT(net.layer_sizes[2] == 3,  "iris output size == 3");
+
+        /* Setosa sample — should predict class 0 */
+        float setosa[] = {5.1f, 3.5f, 1.4f, 0.2f};
+        int pred = predict(&net, setosa, 0);
+        ASSERT(pred == 0, "iris: setosa → class 0");
+
+        free_network(&net);
+    }
 }
 
 /* ── Main ─────────────────────────────────────────────────────────── */
