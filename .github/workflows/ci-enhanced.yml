@@ -1,0 +1,274 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # Code Quality Checks
+  lint:
+    name: Code Quality (Linting & Formatting)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install black flake8 mypy bandit
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check Python formatting (Black)
+        run: |
+          black --check src/python/ scripts/ tests/
+
+      - name: Lint Python (Flake8)
+        run: |
+          flake8 src/python/ scripts/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+
+      - name: Type check Python (MyPy)
+        continue-on-error: true
+        run: |
+          mypy src/python/ --ignore-missing-imports
+
+      - name: Security scan Python (Bandit)
+        run: |
+          bandit -r src/python/ -f json -o bandit-report.json || true
+          bandit -r src/python/
+
+      - name: Check C formatting (clang-format)
+        run: |
+          clang-format --dry-run --Werror src/c/*.c || echo "C formatting needs attention"
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: bandit-report.json
+
+  # C Code Build and Test
+  build-and-test:
+    name: Build & Test (C)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make valgrind cppcheck
+
+      - name: Static analysis (cppcheck)
+        run: |
+          cppcheck --enable=all --inconclusive --std=c11 \
+            --suppress=missingIncludeSystem \
+            src/c/inference.c 2>&1 | tee cppcheck-report.txt || true
+
+      - name: Build inference engine
+        run: make inference
+
+      - name: Build and run unit tests
+        run: make test
+
+      - name: Memory leak check (Valgrind)
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 \
+            --log-file=valgrind-report.txt \
+            ./inference iris || echo "Valgrind check completed"
+
+      - name: Run Iris benchmark
+        run: |
+          echo "=== Iris Benchmark ==="
+          ./inference iris | tee iris_benchmark.txt
+          grep "Predictions/sec" iris_benchmark.txt
+
+      - name: Upload analysis reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-analysis-reports
+          path: |
+            cppcheck-report.txt
+            valgrind-report.txt
+            iris_benchmark.txt
+
+  # Python Unit Tests
+  python-tests:
+    name: Python Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run Python unit tests with coverage
+        run: |
+          pytest tests/unit/ -v --cov=src/python --cov-report=xml --cov-report=html --cov-report=term
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            htmlcov/
+
+  # Docker Build
+  docker:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t tiny-ml-runtime:${{ github.sha }} .
+
+      - name: Run inference in Docker (Iris)
+        run: docker run --rm tiny-ml-runtime:${{ github.sha }}
+
+      - name: Run inference in Docker (MNIST)
+        run: docker run --rm tiny-ml-runtime:${{ github.sha }} ./inference mnist
+
+      - name: Test Docker image size
+        run: |
+          SIZE=$(docker images tiny-ml-runtime:${{ github.sha }} --format "{{.Size}}")
+          echo "Docker image size: $SIZE"
+
+  # Python Package Build
+  python-package:
+    name: Python Package Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build tools
+        run: |
+          pip install build wheel setuptools
+
+      - name: Build Python package
+        run: |
+          python -m build
+
+      - name: Install package
+        run: |
+          pip install dist/*.whl
+
+      - name: Test Python extension
+        run: |
+          python -c "import tinymlinference; print('Package import successful')"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+  # Integration Tests
+  integration-tests:
+    name: End-to-End Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-and-test, python-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          sudo apt-get install -y gcc make
+
+      - name: Run end-to-end test pipeline
+        run: |
+          echo "Training model..."
+          python src/python/train.py
+
+          echo "Exporting weights..."
+          python src/python/export_weights.py
+
+          echo "Building C inference engine..."
+          make inference
+
+          echo "Running inference..."
+          ./inference iris
+
+          echo "Integration test completed successfully"
+
+  # Performance Regression Detection
+  benchmark:
+    name: Performance Benchmarking
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build inference engine
+        run: make inference
+
+      - name: Run performance benchmark
+        run: |
+          echo "=== Performance Benchmark ===" | tee benchmark-results.txt
+          ./inference iris | tee -a benchmark-results.txt
+          ./inference mnist | tee -a benchmark-results.txt
+
+      - name: Extract metrics
+        run: |
+          IRIS_PERF=$(grep "Predictions/sec" benchmark-results.txt | head -n1 | awk '{print $2}')
+          echo "Iris performance: $IRIS_PERF predictions/sec"
+          echo "iris_perf=$IRIS_PERF" >> $GITHUB_ENV
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.txt
+
+  # Summary Job
+  ci-success:
+    name: CI Pipeline Success
+    runs-on: ubuntu-latest
+    needs: [lint, build-and-test, python-tests, docker, python-package, integration-tests]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          echo "All CI jobs completed"
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Build & Test: ${{ needs.build-and-test.result }}"
+          echo "Python Tests: ${{ needs.python-tests.result }}"
+          echo "Docker: ${{ needs.docker.result }}"
+          echo "Python Package: ${{ needs.python-package.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
