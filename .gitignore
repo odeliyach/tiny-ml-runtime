@@ -1,0 +1,25 @@
+# Compiled binaries
+inference
+inference.exe
+test_inference
+*.o
+*.out
+
+# Data files (too large for version control)
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# NumPy exports
+*.npy
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
