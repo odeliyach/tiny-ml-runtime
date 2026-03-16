@@ -24,5 +24,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Python build artifacts
+*.egg-info/
+dist/
+build/
+*.whl
+
 # Misc
 output.txt

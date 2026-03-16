@@ -101,8 +101,11 @@ Predictions/sec:  2,732,240
 ## Project Structure
 ```
 inference.c           # C inference engine (the interesting part)
+inference_module.c    # CPython C extension — exposes engine to Python
+setup.py              # Python package build (pip install .)
 test_inference.c      # Unit tests for core functions
 Makefile              # Build system (make, make test, make clean)
+Dockerfile            # Containerised inference engine
 train.py              # Train Iris model in PyTorch
 train_mnist.py        # Train MNIST model in PyTorch
 export_weights.py     # Export Iris weights to binary
@@ -131,6 +134,25 @@ make            # build inference engine
 **Run tests:**
 ```bash
 make test       # build and run unit tests
+```
+
+**Docker:**
+```bash
+docker build -t tiny-ml-runtime .
+docker run --rm tiny-ml-runtime            # Iris inference
+docker run --rm tiny-ml-runtime ./inference mnist  # MNIST inference
+```
+
+**Python package (CPython C-API):**
+```bash
+pip install .
+```
+
+```python
+import tinymlinference
+
+class_idx, probs = tinymlinference.predict("iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
+print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 ```
 
 ## Why I built this

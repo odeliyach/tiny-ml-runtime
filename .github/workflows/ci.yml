@@ -20,3 +20,39 @@ jobs:
 
       - name: Build and run tests
         run: make test
+
+      - name: Run Iris benchmark
+        run: |
+          echo "=== Iris Benchmark ==="
+          ./inference iris | tee iris_benchmark.txt
+          grep "Predictions/sec" iris_benchmark.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: iris_benchmark.txt
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t tiny-ml-runtime .
+
+      - name: Run inference in Docker
+        run: docker run --rm tiny-ml-runtime
+
+  python-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build Python extension
+        run: pip install .
