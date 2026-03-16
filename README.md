@@ -10,31 +10,41 @@ Supports any architecture - tested on Iris and MNIST.
 
 ## Benchmark Results
 
-### Iris (4 → 8 → 3) - tiny network
-| Runtime        | Predictions/sec | Time (1M iterations) |
-|----------------|-----------------|----------------------|
-| Pure C         | 2,732,240       | 0.366 seconds        |
-| PyTorch Python | 10,596          | 94.374 seconds       |
-| **Speedup**    | **258x faster** |                      |
+**Benchmark conditions:** single-sample inference (batch size = 1), single-threaded Python loop,
+no GPU, CPU-only. PyTorch 2.x, Python 3.11, Apple M1 (ARM64).
+Each PyTorch call goes through the full Python → C++ dispatch path.
 
-### MNIST (784 → 128 → 10) - larger network
-| Runtime        | Predictions/sec | Time (100K iterations) |
-|----------------|-----------------|------------------------|
-| Pure C         | 4,244           | 23.563 seconds         |
-| PyTorch Python | 22,502          | 0.444 seconds          |
-| **Speedup**    | **PyTorch 5x faster** |                   |
+### Iris (4 → 8 → 3) - tiny network, overhead-bound
+| Runtime                  | Predictions/sec | Time (1M iterations) |
+|--------------------------|-----------------|----------------------|
+| Pure C                   | 2,732,240       | 0.366 seconds        |
+| PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
+| **Speedup**              | **258x**        |                      |
 
-### Why the difference?
+> ⚠️ The 258x figure measures **Python + PyTorch dispatch overhead** on a 4-feature input,
+> not PyTorch's raw computational throughput. With batching or GPU this gap disappears entirely.
 
-On **Iris**, the network is tiny - PyTorch's Python overhead dominates.
-C wins because it has zero overhead.
+### MNIST (784 → 128 → 10) - larger network, compute-bound
+| Runtime                  | Predictions/sec | Time (100K iterations) |
+|--------------------------|-----------------|------------------------|
+| Pure C (naive loops)     | 4,244           | 23.563 seconds         |
+| PyTorch (Python, batch=1)| 22,502          | 0.444 seconds          |
+| **Speedup**              | **PyTorch 5x faster** |                   |
 
-On **MNIST**, the matrices are large (W1 = 128×784 = 100K multiplications
-per prediction). PyTorch uses optimized BLAS libraries with SIMD instructions.
-Our C code uses naive loops — no vectorization, no cache optimization.
+### Why the numbers tell opposite stories
 
-The crossover point reveals exactly where framework overhead ends
-and raw computation begins. That's the interesting result.
+On **Iris (4 inputs)**, the actual matrix multiplications are trivial — just a few dozen
+floating-point operations. The bottleneck is the Python interpreter and PyTorch's
+C++ dispatch overhead on every call. C has zero overhead, so it wins by a wide margin.
+
+On **MNIST (784 inputs)**, the dominant cost is the `W1` matrix multiply: 128 × 784 = ~100K
+multiply-add operations per prediction. PyTorch calls into optimized BLAS (OpenBLAS / Accelerate)
+with SIMD vectorization. Our C code uses naive nested loops — no SIMD, no cache tiling,
+no parallelism — so PyTorch wins here.
+
+**The crossover point is the real insight:** it reveals exactly where framework overhead ends
+and where raw computation begins. A C implementation is only faster than PyTorch when
+the network is small enough that dispatch overhead dominates the math.
 
 ## Architecture
 ```
@@ -158,10 +168,13 @@ print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 ## Why I built this
 
 I wanted to understand what PyTorch actually does under the hood,
-so I implemented neural network inference from scratch in C -
+so I implemented neural network inference from scratch in C —
 matrix multiplication, ReLU, Softmax, the full forward pass.
 
-The benchmark results tell an interesting story: C is 258x faster
-on tiny networks (overhead-bound) but slower on large ones
-(compute-bound, where PyTorch's BLAS optimization wins).
-That crossover is the real insight.
+The benchmark results tell an interesting story: for single-sample
+(batch=1) inference, C is 258x faster on tiny networks because
+PyTorch's Python dispatch overhead dominates the actual computation.
+But on larger networks (MNIST), PyTorch's BLAS/SIMD back-end wins
+by 5x because our C code uses naive loops.
+That crossover — the point where dispatch overhead gives way to
+raw FLOP throughput — is the real insight.
