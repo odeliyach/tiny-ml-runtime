@@ -1,6 +1,8 @@
 # Tiny ML Runtime in C
 
-A generic neural network inference engine implemented in pure C-
+[![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
+
+A generic neural network inference engine implemented in pure C —
 no frameworks, no dependencies.
 
 Trains in Python (PyTorch), exports weights, runs inference in C.
@@ -98,13 +100,15 @@ Predictions/sec:  2,732,240
 
 ## Project Structure
 ```
+inference.c           # C inference engine (the interesting part)
+test_inference.c      # Unit tests for core functions
+Makefile              # Build system (make, make test, make clean)
 train.py              # Train Iris model in PyTorch
 train_mnist.py        # Train MNIST model in PyTorch
 export_weights.py     # Export Iris weights to binary
 export_mnist.py       # Export MNIST weights to binary
 benchmark.py          # PyTorch benchmark (Iris)
 benchmark_mnist.py    # PyTorch benchmark (MNIST)
-inference.c           # C inference engine (the interesting part)
 ```
 
 ## Run it yourself
@@ -119,9 +123,14 @@ py export_mnist.py
 
 **Compile and run:**
 ```bash
-gcc inference.c -o inference -lm
+make            # build inference engine
 ./inference iris
 ./inference mnist
+```
+
+**Run tests:**
+```bash
+make test       # build and run unit tests
 ```
 
 ## Why I built this
