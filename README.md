@@ -122,6 +122,7 @@ python3 src/python/export_weights.py && mv iris_weights.bin data/
 python3 src/python/train_mnist.py
 python3 src/python/export_mnist.py && mv mnist_weights.bin data/
 ```
+The export scripts write their `.bin` files to the current working directory; the commands above move them into `data/` so inference and tests can find them.
 
 **Compile and run:**
 ```bash
