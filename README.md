@@ -3,7 +3,7 @@
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Compact neural-network inference engine in pure C, wired to a CPython extension so Python trains/exports while C owns the hot path. Direct, production-minded: clear src layout, repeatable builds, tests, Docker, and CI on every push.
+Compact neural-network inference engine in pure C, wired to a CPython extension so Python trains/exports while C handles the hot path. Direct, production-minded: clear src layout, repeatable builds, tests, Docker, and CI on every push.
 
 ## Key Technical Highlights
 - **Memory discipline:** Dynamic allocation for weights/biases with `free_network()` cleanup, plus ping-pong activation buffers sized once per run to avoid per-layer allocations and keep cache-friendly hot paths.
@@ -24,7 +24,7 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
 | **Speedup (C vs PyTorch)** | **≈258×**      |                      |
 
-> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized toward parity and PyTorch becomes the faster path.
+> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized to parity and PyTorch overtakes.
 
 ### MNIST (784 → 128 → 10) — compute-bound
 | Runtime                  | Predictions/sec | Time (100K iterations) |
@@ -33,7 +33,7 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 22,502          | 0.444 seconds          |
 | **Speedup (PyTorch vs C)** | **~5×**        |                |
 
-**Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over.
+**Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over. (Arrows denote layer flow; × denotes matrix dimensions.)
 
 ## System Architecture & Layout
 ```
