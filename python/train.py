@@ -1,9 +1,11 @@
+from pathlib import Path
+
+import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import numpy as np
 
 # טעינת הדאטה
 iris = load_iris()
@@ -60,6 +62,8 @@ with torch.no_grad():
     accuracy = (predicted == y_test).float().mean()
     print(f"\nAccuracy: {accuracy.item()*100:.1f}%")
 
+ROOT = Path(__file__).resolve().parent.parent
+
 # שמירת המשקלות
 weights = {
     'w1': model.fc1.weight.detach().numpy(),
@@ -69,5 +73,5 @@ weights = {
     'scaler_mean': scaler.mean_.astype(np.float32),
     'scaler_std': scaler.scale_.astype(np.float32)
 }
-np.save('weights.npy', weights)
-print("\nWeights saved to weights.npy")
+np.save(ROOT / 'weights.npy', weights)
+print(f"\nWeights saved to {ROOT / 'weights.npy'}")

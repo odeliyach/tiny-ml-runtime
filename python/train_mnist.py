@@ -1,8 +1,14 @@
+from pathlib import Path
+
+import numpy as np
 import torch
 import torch.nn as nn
-from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-import numpy as np
+from torchvision import datasets, transforms
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Load MNIST dataset
 transform = transforms.Compose([
@@ -10,8 +16,8 @@ transform = transforms.Compose([
     transforms.Normalize((0.1307,), (0.3081,))  # MNIST mean and std
 ])
 
-train_data = datasets.MNIST('./data', train=True,  download=True, transform=transform)
-test_data  = datasets.MNIST('./data', train=False, download=True, transform=transform)
+train_data = datasets.MNIST(DATA_DIR, train=True,  download=True, transform=transform)
+test_data  = datasets.MNIST(DATA_DIR, train=False, download=True, transform=transform)
 
 train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
 test_loader  = DataLoader(test_data,  batch_size=1000)
@@ -55,11 +61,11 @@ for epoch in range(5):
 
 # Export weights in generic format
 print("\nExporting weights...")
-np.save('mnist_weights.npy', {
+np.save(ROOT / 'mnist_weights.npy', {
     'architecture': [784, 128, 10],
     'w1': model.fc1.weight.detach().numpy().astype(np.float32),
     'b1': model.fc1.bias.detach().numpy().astype(np.float32),
     'w2': model.fc2.weight.detach().numpy().astype(np.float32),
     'b2': model.fc2.bias.detach().numpy().astype(np.float32),
 })
-print("Saved to mnist_weights.npy")
+print(f"Saved to {ROOT / 'mnist_weights.npy'}")

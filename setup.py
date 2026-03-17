@@ -2,7 +2,7 @@ from setuptools import setup, Extension
 
 tinymlinference = Extension(
     "tinymlinference",
-    sources=["inference_module.c"],
+    sources=["src/inference_module.c"],
     extra_compile_args=["-O2", "-Wall"],
     libraries=["m"],
 )

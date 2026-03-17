@@ -5,8 +5,10 @@ test_inference
 *.o
 *.out
 
-# Data files (too large for version control)
-data/
+# Data files (keep binaries, ignore everything else inside data/)
+!/data/
+data/*
+!data/*.bin
 
 # Python
 __pycache__/

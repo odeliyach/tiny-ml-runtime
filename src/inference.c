@@ -292,7 +292,7 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(mode, "mnist") == 0) {
         printf("=== MNIST (784 -> 128 -> 10) ===\n\n");
-        if (!load_weights(&net, "mnist_weights.bin")) return 1;
+        if (!load_weights(&net, "data/mnist_weights.bin")) return 1;
         printf("Weights loaded successfully!\n\n");
 
         float sample[784] = {0};
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
 
     } else {
         printf("=== Iris (4 -> 8 -> 3) ===\n\n");
-        if (!load_weights(&net, "iris_weights.bin")) return 1;
+        if (!load_weights(&net, "data/iris_weights.bin")) return 1;
         printf("Weights loaded successfully!\n\n");
 
         char *labels[] = {"Setosa", "Versicolor", "Virginica"};

@@ -4,7 +4,7 @@
  * Exposes the C inference engine to Python:
  *
  *   import tinymlinference
- *   probs = tinymlinference.predict("iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
+ *   probs = tinymlinference.predict("data/iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
  *   # → (0, [1.0, 0.0, 0.0])
  *
  * Build: pip install .   (uses setup.py / pyproject.toml)

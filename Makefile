@@ -4,12 +4,14 @@ LDFLAGS = -lm
 
 .PHONY: all clean test
 
+SRC_DIR := src
+
 all: inference
 
-inference: inference.c
+inference: $(SRC_DIR)/inference.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
-test_inference: test_inference.c
+test_inference: $(SRC_DIR)/test_inference.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 test: test_inference

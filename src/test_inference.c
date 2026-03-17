@@ -336,15 +336,15 @@ void test_load_and_predict_iris(void) {
     printf("test_load_and_predict_iris\n");
 
     /* Try loading iris weights — skip if file not present */
-    FILE *f = fopen("iris_weights.bin", "rb");
+    FILE *f = fopen("data/iris_weights.bin", "rb");
     if (!f) {
-        printf("  SKIP: iris_weights.bin not found\n");
+        printf("  SKIP: data/iris_weights.bin not found\n");
         return;
     }
     fclose(f);
 
     Network net;
-    int ok = load_weights(&net, "iris_weights.bin");
+    int ok = load_weights(&net, "data/iris_weights.bin");
     ASSERT(ok == 1, "load iris_weights.bin succeeds");
 
     if (ok) {

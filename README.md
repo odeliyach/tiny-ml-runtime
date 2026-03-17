@@ -112,28 +112,39 @@ Predictions/sec:  2,732,240
 
 ## Project Structure
 ```
-inference.c           # C inference engine (the interesting part)
-inference_module.c    # CPython C extension — exposes engine to Python
-setup.py              # Python package build (pip install .)
-test_inference.c      # Unit tests for core functions
+src/                  # C sources and tests
+  inference.c         # C inference engine (the interesting part)
+  inference_module.c  # CPython C extension — exposes engine to Python
+  test_inference.c    # Unit tests for core functions
+
+python/               # Training, export, and benchmark scripts (PyTorch)
+  train.py
+  train_mnist.py
+  export_weights.py
+  export_mnist.py
+  benchmark.py
+  benchmark_mnist.py
+
+data/                 # Model artifacts (.bin weights, downloaded MNIST data)
+docs/                 # Project documentation (TECHNICAL_ANALYSIS.md)
+
 Makefile              # Build system (make, make test, make clean)
 Dockerfile            # Containerised inference engine
-train.py              # Train Iris model in PyTorch
-train_mnist.py        # Train MNIST model in PyTorch
-export_weights.py     # Export Iris weights to binary
-export_mnist.py       # Export MNIST weights to binary
-benchmark.py          # PyTorch benchmark (Iris)
-benchmark_mnist.py    # PyTorch benchmark (MNIST)
+setup.py              # Python package build (pip install .)
 ```
+
+## Documentation
+
+- [Technical Analysis](docs/TECHNICAL_ANALYSIS.md)
 
 ## Run it yourself
 
 **Train and export:**
 ```bash
-py train.py
-py train_mnist.py
-py export_weights.py
-py export_mnist.py
+py python/train.py
+py python/train_mnist.py
+py python/export_weights.py
+py python/export_mnist.py
 ```
 
 **Compile and run:**
@@ -163,7 +174,7 @@ pip install .
 ```python
 import tinymlinference
 
-class_idx, probs = tinymlinference.predict("iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
+class_idx, probs = tinymlinference.predict("data/iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
 print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 ```
 
