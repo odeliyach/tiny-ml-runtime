@@ -1,4 +1,5 @@
 # Tiny ML Runtime in C
+Technical Stack: C (C11) | Python | PyTorch | Docker | GitHub Actions
 
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -61,14 +62,14 @@ Tested on:
 - Iris:  4 → 8 → 3   (flower classification, 3 classes)
 - MNIST: 784 → 128 → 10  (digit recognition, 10 classes)
 
-## What's implemented from scratch in C
+## Technical Highlights
 
-- Matrix multiplication (naive, row-major flat arrays)
-- ReLU activation function
-- Softmax with numerical stability (max subtraction)
-- Generic forward pass — reads architecture from weights file
-- Binary weight loader with optional StandardScaler normalization
-- Benchmarking
+- **C inference core (from scratch):** Matrix multiplication (naive, row-major flat arrays), ReLU, Softmax with numerical stability, generic forward pass driven by weight files, and a binary loader with optional StandardScaler normalization.
+- **Systems programming & memory management:** Manual allocation with cleanup, buffer ping-pong to avoid churn, and stack vs heap sizing tradeoffs.
+- **Performance engineering:** Benchmarking discipline (1M iterations, controlled runs), separating framework overhead from math, and reading the overhead/computation crossover.
+- **Polyglot programming (Python ↔ C):** CPython C-API extension, cross-language error handling, and packaging via `setup.py`/`pyproject.toml`.
+- **Production patterns:** Numerical stability, input validation, unit tests (25 cases), and CI/CD coverage across targets.
+- **Infrastructure:** Containerized environment (Docker) and automated CI/CD pipeline (GitHub Actions) for build and test validation.
 
 ## How it works
 
@@ -87,60 +88,45 @@ The binary format:
 [scaler_std:  float32 x input_size]  ← optional
 ```
 
-## Sample Output
-```
-=== Iris (4 -> 8 -> 3) ===
-Weights loaded successfully!
-
-Flower 1: [5.1, 3.5, 1.4, 0.2]
-Probabilities: [1.000, 0.000, 0.000]
-Predicted: Setosa (class 0)
-
-Flower 2: [6.0, 2.9, 4.5, 1.5]
-Probabilities: [0.000, 0.993, 0.007]
-Predicted: Versicolor (class 1)
-
-Flower 3: [6.3, 3.3, 6.0, 2.5]
-Probabilities: [0.000, 0.000, 1.000]
-Predicted: Virginica (class 2)
-
---- Benchmark ---
-Iterations:       1,000,000
-Time:             0.366 seconds
-Predictions/sec:  2,732,240
-```
-
 ## Project Structure
 ```
-inference.c           # C inference engine (the interesting part)
-inference_module.c    # CPython C extension — exposes engine to Python
-setup.py              # Python package build (pip install .)
-test_inference.c      # Unit tests for core functions
-Makefile              # Build system (make, make test, make clean)
-Dockerfile            # Containerised inference engine
-train.py              # Train Iris model in PyTorch
-train_mnist.py        # Train MNIST model in PyTorch
-export_weights.py     # Export Iris weights to binary
-export_mnist.py       # Export MNIST weights to binary
-benchmark.py          # PyTorch benchmark (Iris)
-benchmark_mnist.py    # PyTorch benchmark (MNIST)
+src/
+  c/
+    inference.c          # C inference engine
+    inference_module.c   # CPython C extension
+    test_inference.c     # Unit tests for core functions
+  python/
+    train.py             # Train Iris model in PyTorch
+    train_mnist.py       # Train MNIST model in PyTorch
+    export_weights.py    # Export Iris weights to binary
+    export_mnist.py      # Export MNIST weights to binary
+    benchmark.py         # PyTorch benchmark (Iris)
+    benchmark_mnist.py   # PyTorch benchmark (MNIST)
+docs/
+  TECHNICAL_ANALYSIS.md  # Deeper dive on design and performance
+data/                    # Generated weight files (.bin)
+Makefile                 # Build system (make, make test, make clean)
+Dockerfile               # Containerised inference engine
+setup.py / pyproject.toml# Python package build metadata
 ```
 
 ## Run it yourself
 
 **Train and export:**
 ```bash
-py train.py
-py train_mnist.py
-py export_weights.py
-py export_mnist.py
+mkdir -p data
+python3 src/python/train.py
+python3 src/python/export_weights.py && mv iris_weights.bin data/
+
+python3 src/python/train_mnist.py
+python3 src/python/export_mnist.py && mv mnist_weights.bin data/
 ```
 
 **Compile and run:**
 ```bash
-make            # build inference engine
-./inference iris
-./inference mnist
+make                         # build inference engine
+./inference iris             # expects data/iris_weights.bin
+./inference mnist            # expects data/mnist_weights.bin
 ```
 
 **Run tests:**
@@ -163,49 +149,13 @@ pip install .
 ```python
 import tinymlinference
 
-class_idx, probs = tinymlinference.predict("iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
+class_idx, probs = tinymlinference.predict("data/iris_weights.bin", [5.1, 3.5, 1.4, 0.2])
 print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 ```
 
 ## Why I built this
 
-I wanted to understand what PyTorch actually does under the hood,
-so I implemented neural network inference from scratch in C —
-matrix multiplication, ReLU, Softmax, the full forward pass.
-
-The benchmark results tell an interesting story: for single-sample
-(batch=1) inference, C is 258x faster on tiny networks because
-PyTorch's Python dispatch overhead dominates the actual computation.
-But on larger networks (MNIST), PyTorch's BLAS/SIMD back-end wins
-by 5x because our C code uses naive loops.
-That crossover — the point where dispatch overhead gives way to
-raw FLOP throughput — is the real insight.
-
-## What This Project Demonstrates
-
-### 1. **Systems Programming & Memory Management**
-- Manual memory allocation with proper cleanup (no leaks)
-- Buffer reuse patterns (ping-pong buffers reduce allocations)
-- Understanding stack vs heap tradeoffs for different data sizes
-- Pointer arithmetic for efficient matrix operations on flat arrays
-
-### 2. **Performance Engineering**
-- Identifying performance bottlenecks (overhead vs computation)
-- Benchmarking methodology (1M iterations, controlled environment)
-- Understanding when naive C beats optimized frameworks (and when it doesn't)
-- Recognizing the crossover point between framework overhead and raw throughput
-
-### 3. **Polyglot Programming (Python ↔ C)**
-- CPython C-API for native extensions
-- Cross-language type conversion and error handling
-- Build system integration (setup.py, pyproject.toml)
-- Knowing when to drop down to C for performance
-
-### 4. **Production Patterns**
-- Numerical stability techniques (softmax max-subtraction trick)
-- Proper error handling and input validation
-- Comprehensive unit testing (25 tests covering edge cases)
-- CI/CD pipeline with multiple build targets
+I wanted to see exactly what PyTorch does under the hood, so I wrote the inference path myself in C — matrix multiplication, ReLU, Softmax, the full forward pass. Building it from scratch made the tradeoffs obvious: on tiny, batch=1 networks the Python dispatch path dominates (C wins by 258x), but on MNIST the optimized BLAS/SIMD back-end in PyTorch beats my naive loops by 5x. That crossover — where overhead yields to raw computation — is the insight I was chasing.
 
 ## License
 
