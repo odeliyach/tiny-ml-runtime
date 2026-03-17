@@ -15,7 +15,7 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 
 ## Benchmarks (single-thread, batch=1)
 
-**Conditions:** single-sample inference (batch=1), single-threaded Python loop, CPU-only. PyTorch 2.x, Python 3.11, Apple M1 (ARM64). Each PyTorch call goes through the full Python → C++ dispatch path. Notation: arrows (`→`) show layer transitions; `×` denotes matrix dimensions (e.g., 128×784).
+**Conditions:** single-sample inference (batch=1), single-threaded Python loop, CPU-only. PyTorch 2.x, Python 3.11, Apple M1 (ARM64). Each PyTorch call goes through the full Python → C++ dispatch path. Notation: arrows (`→`) show layer transitions; `×` denotes matrix dimensions (e.g., 128×784) and, when paired with `≈`, speed multipliers (e.g., ≈258×).
 
 ### Iris (4 → 8 → 3) — overhead-bound
 | Runtime                  | Predictions/sec | Time (1M iterations) |
@@ -24,7 +24,7 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
 | **Speedup (C vs PyTorch)** | **≈258×**      |                      |
 
-> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized until the C/PyTorch gap is negligible; PyTorch then overtakes with its BLAS/GPU path.
+> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized until the gap closes and PyTorch overtakes with its BLAS/GPU path.
 
 ### MNIST (784 → 128 → 10) — compute-bound
 | Runtime                  | Predictions/sec | Time (100K iterations) |
@@ -39,7 +39,6 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 ```
 Input → Linear → ReLU → ... → Linear → Softmax
 ```
-- Legend: arrows (`→`) show layer/data flow.
 - **src/c/inference.c**: core forward path (linear, ReLU, softmax), weight loader, benchmark.
 - **src/c/inference_module.c**: CPython extension exposing `tinymlinference.predict()`.
 - **src/c/test_inference.c**: unit tests for math, stability, scaling, and end-to-end predictions.
