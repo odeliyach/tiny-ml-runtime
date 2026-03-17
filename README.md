@@ -117,12 +117,12 @@ setup.py / pyproject.toml# Python package build metadata
 ```bash
 mkdir -p data
 python3 src/python/train.py
-python3 src/python/export_weights.py && mv iris_weights.bin data/
+python3 src/python/export_weights.py && test -f iris_weights.bin && mv -v iris_weights.bin data/
 
 python3 src/python/train_mnist.py
-python3 src/python/export_mnist.py && mv mnist_weights.bin data/
+python3 src/python/export_mnist.py && test -f mnist_weights.bin && mv -v mnist_weights.bin data/
 ```
-The export scripts write their `.bin` files to the current working directory; the commands above move them into `data/` so inference and tests can find them. The `&&` chaining means `mv` only runs after a successful export, and `mv` will surface an error if the file is missing.
+The export scripts write their `.bin` files to the current working directory; the commands above explicitly check for the file and move it into `data/` so inference and tests can find it, surfacing any missing file immediately.
 
 **Compile and run:**
 ```bash
