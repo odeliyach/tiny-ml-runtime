@@ -22,14 +22,35 @@ typedef struct {
     float scaler_std[MAX_LAYERS];
 } Network;
 
+/**
+ * Loads neural network weights from a binary file.
+ *
+ * File format:
+ *   [num_layers: int32]
+ *   [layer_sizes: int32 x num_layers]
+ *   [W0, b0, W1, b1, ...: float32 arrays]
+ *   [scaler_mean, scaler_std: float32 arrays] (optional)
+ *
+ * @param net      Pointer to Network struct to populate
+ * @param filename Path to binary weights file
+ * @return         1 on success, 0 on failure
+ */
 int load_weights(Network *net, const char *filename) {
     FILE *f = fopen(filename, "rb");
     if (!f) { printf("Error: could not open %s\n", filename); return 0; }
 
     // First: read architecture
     // e.g. [3, 4, 8, 3] means 3 layers of sizes 4, 8, 3
-    fread(&net->num_layers, sizeof(int), 1, f);
-    fread(net->layer_sizes, sizeof(int), net->num_layers, f);
+    if (fread(&net->num_layers, sizeof(int), 1, f) != 1) {
+        fclose(f);
+        printf("Error: failed to read num_layers\n");
+        return 0;
+    }
+    if (fread(net->layer_sizes, sizeof(int), net->num_layers, f) != (size_t)net->num_layers) {
+        fclose(f);
+        printf("Error: failed to read layer_sizes\n");
+        return 0;
+    }
 
     // For each pair of adjacent layers, load weights and biases
     for (int i = 0; i < net->num_layers - 1; i++) {
@@ -40,15 +61,33 @@ int load_weights(Network *net, const char *filename) {
         net->weights[i] = malloc(rows * cols * sizeof(float));
         net->biases[i]  = malloc(rows * sizeof(float));
 
-        fread(net->weights[i], sizeof(float), rows * cols, f);
-        fread(net->biases[i],  sizeof(float), rows,        f);
+        if (!net->weights[i] || !net->biases[i]) {
+            fclose(f);
+            printf("Error: memory allocation failed\n");
+            return 0;
+        }
+
+        if (fread(net->weights[i], sizeof(float), rows * cols, f) != (size_t)(rows * cols)) {
+            fclose(f);
+            printf("Error: failed to read weights for layer %d\n", i);
+            return 0;
+        }
+        if (fread(net->biases[i], sizeof(float), rows, f) != (size_t)rows) {
+            fclose(f);
+            printf("Error: failed to read biases for layer %d\n", i);
+            return 0;
+        }
     }
 
     // Try to load scaler — if present in file (Iris has it, MNIST doesn't)
     int input_size = net->layer_sizes[0];
     size_t n = fread(net->scaler_mean, sizeof(float), input_size, f);
     if (n == (size_t)input_size) {
-        fread(net->scaler_std, sizeof(float), input_size, f);
+        if (fread(net->scaler_std, sizeof(float), input_size, f) != (size_t)input_size) {
+            fclose(f);
+            printf("Error: failed to read scaler_std\n");
+            return 0;
+        }
         net->has_scaler = 1;
     } else {
         net->has_scaler = 0;
@@ -66,10 +105,20 @@ void free_network(Network *net) {
     }
 }
 
-// Matrix multiply + bias: out = W @ in + b
-// W is stored as a flat 1D array in memory (row by row)
-// In Python this would be: out = W @ in + b  (one line)
-// In C we have no 2D arrays, so we do it manually
+/**
+ * Performs linear transformation: out = W @ in + b
+ *
+ * W is stored as a flat 1D array in row-major order.
+ * In Python: out = W @ in + b (one line)
+ * In C we have no 2D arrays, so we do it manually.
+ *
+ * @param in   Input vector (size: cols)
+ * @param W    Weight matrix, row-major flat array (size: rows * cols)
+ * @param b    Bias vector (size: rows)
+ * @param out  Output vector (size: rows)
+ * @param rows Number of output neurons
+ * @param cols Number of input features
+ */
 void linear(float *in, float *W, float *b, float *out, int rows, int cols) {
 
     // Loop over each neuron in the output layer
@@ -90,17 +139,34 @@ void linear(float *in, float *W, float *b, float *out, int rows, int cols) {
     }
 }
 
-// ReLU: kill negative values in-place
-// WHY: without non-linearity, stacking linear layers is pointless —
-// W2 @ (W1 @ x) = (W2@W1) @ x, which collapses to one linear layer.
-// ReLU breaks this, allowing the network to learn complex patterns.
+/**
+ * Applies ReLU activation function in-place: f(x) = max(0, x)
+ *
+ * WHY: without non-linearity, stacking linear layers is pointless —
+ * W2 @ (W1 @ x) = (W2@W1) @ x, which collapses to one linear layer.
+ * ReLU breaks this, allowing the network to learn complex patterns.
+ *
+ * @param x    Array to modify in-place
+ * @param size Number of elements
+ */
 void relu(float *x, int size) {
     for (int i = 0; i < size; i++)
         if (x[i] < 0) x[i] = 0;
 }
 
-// Softmax: convert raw scores to probabilities that sum to 1.0
-// Only used at the final layer.
+/**
+ * Applies softmax activation in-place: p_i = exp(x_i) / sum(exp(x_j))
+ *
+ * Converts raw scores to probabilities that sum to 1.0.
+ * Only used at the final layer.
+ *
+ * Uses max-subtraction trick for numerical stability:
+ * - Without: exp(1000) = infinity (overflow)
+ * - With:    exp(1000-1000) = exp(0) = 1.0 (safe)
+ *
+ * @param x    Array to modify in-place
+ * @param size Number of elements
+ */
 void softmax(float *x, int size) {
 
     // Step 1: find the maximum value — for numerical stability only
@@ -125,11 +191,20 @@ void softmax(float *x, int size) {
     // That's a different max — not this one!
 }
 
-// Generic forward pass — works for ANY architecture.
-// Uses two buffers (buf_a, buf_b) and ping-pongs between them:
-//   layer 0: read buf_a → write buf_b
-//   layer 1: read buf_b → write buf_a  ...etc
-// This avoids allocating a new buffer per layer.
+/**
+ * Runs forward pass through the network and returns predicted class.
+ *
+ * Generic implementation — works for ANY architecture.
+ * Uses two buffers (buf_a, buf_b) and ping-pongs between them:
+ *   layer 0: read buf_a → write buf_b
+ *   layer 1: read buf_b → write buf_a  ...etc
+ * This avoids allocating a new buffer per layer.
+ *
+ * @param net     Pointer to loaded Network struct
+ * @param input   Input feature vector (size: net->layer_sizes[0])
+ * @param verbose If 1, prints probabilities to stdout
+ * @return        Predicted class index (0-based)
+ */
 int predict(Network *net, float *input, int verbose) {
 
     // Step 1: normalize input if scaler exists
