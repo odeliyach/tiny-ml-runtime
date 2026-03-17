@@ -24,14 +24,14 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
 | **Speedup**              | **258×**        |                      |
 
-> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. With batching or GPU this gap disappears.
+> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized and the advantage collapses/reverses.
 
 ### MNIST (784 → 128 → 10) — compute-bound
 | Runtime                  | Predictions/sec | Time (100K iterations) |
 |--------------------------|-----------------|------------------------|
 | Pure C (naive loops)     | 4,244           | 23.563 seconds         |
 | PyTorch (Python, batch=1)| 22,502          | 0.444 seconds          |
-| **Speedup**              | **PyTorch ~5× faster** |                |
+| **Speedup (PyTorch vs C)** | **~5× faster**        |                |
 
 **Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over.
 
