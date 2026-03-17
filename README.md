@@ -22,16 +22,16 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 |--------------------------|-----------------|----------------------|
 | Pure C                   | 2,732,240       | 0.366 seconds        |
 | PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
-| **Speedup**              | **258×**        |                      |
+| **Speedup (C vs PyTorch)** | **≈258×**      |                      |
 
-> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized and the advantage collapses/reverses.
+> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized toward parity and PyTorch becomes the faster path.
 
 ### MNIST (784 → 128 → 10) — compute-bound
 | Runtime                  | Predictions/sec | Time (100K iterations) |
 |--------------------------|-----------------|------------------------|
 | Pure C (naive loops)     | 4,244           | 23.563 seconds         |
 | PyTorch (Python, batch=1)| 22,502          | 0.444 seconds          |
-| **Speedup (PyTorch vs C)** | **~5× faster**        |                |
+| **Speedup (PyTorch vs C)** | **~5×**        |                |
 
 **Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over.
 
@@ -67,7 +67,7 @@ Input → Linear → ReLU → ... → Linear → Softmax
 - Error handling on all allocation/parse steps; predictable cleanup paths to avoid leaks.
 - Unit tests cover edge cases (uniform softmax, scaler paths, identity networks) to catch regressions early.
 
-## Getting Started (aligned to the new structure)
+## Getting Started
 1) **Train & export (Python):**
 ```bash
 python src/python/train.py
