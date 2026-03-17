@@ -74,8 +74,10 @@ docker run --rm tiny-ml-runtime ./inference mnist
 - **Artifacts:** benchmark output is uploaded from CI for traceability.
 
 ## Benchmarks (single-thread, batch=1)
-- **Iris (4→8→3):** C path avoids Python/PyTorch dispatch overhead → ~2.7M preds/sec (≈258× vs PyTorch called from Python).
-- **MNIST (784→128→10):** math dominates; PyTorch with BLAS/SIMD is ~5× faster than the naive C loops.
+- **Iris (layers 4→8→3):** C path avoids Python/PyTorch dispatch overhead → ~2.7M preds/sec (≈258× vs PyTorch called from Python).
+- **MNIST (layers 784→128→10):** math dominates; PyTorch with BLAS/SIMD is ~5× faster than the naive C loops.
+
+Arrows show layer transitions; the × symbol refers to speedup multipliers.
 
 The takeaway: C wins when overhead dominates; frameworks win when FLOPs dominate.
 
