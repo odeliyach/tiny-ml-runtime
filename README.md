@@ -1,12 +1,14 @@
 # Tiny ML Runtime in C
 
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A generic neural network inference engine implemented in pure C —
-no frameworks, no dependencies.
+**Zero-dependency neural network inference engine in pure C** — demonstrating systems programming, memory management, and Python-C integration.
 
-Trains in Python (PyTorch), exports weights, runs inference in C.
-Supports any architecture - tested on Iris and MNIST.
+Train in Python (PyTorch) → Export weights → Run blazing-fast inference in C.
+**258x faster** than PyTorch on small networks, revealing exactly where framework overhead matters.
+
+**Key Skills**: C Systems Programming • Memory Management • CPython C-API • Performance Engineering
 
 ## Benchmark Results
 
@@ -178,3 +180,33 @@ But on larger networks (MNIST), PyTorch's BLAS/SIMD back-end wins
 by 5x because our C code uses naive loops.
 That crossover — the point where dispatch overhead gives way to
 raw FLOP throughput — is the real insight.
+
+## What This Project Demonstrates
+
+### 1. **Systems Programming & Memory Management**
+- Manual memory allocation with proper cleanup (no leaks)
+- Buffer reuse patterns (ping-pong buffers reduce allocations)
+- Understanding stack vs heap tradeoffs for different data sizes
+- Pointer arithmetic for efficient matrix operations on flat arrays
+
+### 2. **Performance Engineering**
+- Identifying performance bottlenecks (overhead vs computation)
+- Benchmarking methodology (1M iterations, controlled environment)
+- Understanding when naive C beats optimized frameworks (and when it doesn't)
+- Recognizing the crossover point between framework overhead and raw throughput
+
+### 3. **Polyglot Programming (Python ↔ C)**
+- CPython C-API for native extensions
+- Cross-language type conversion and error handling
+- Build system integration (setup.py, pyproject.toml)
+- Knowing when to drop down to C for performance
+
+### 4. **Production Patterns**
+- Numerical stability techniques (softmax max-subtraction trick)
+- Proper error handling and input validation
+- Comprehensive unit testing (25 tests covering edge cases)
+- CI/CD pipeline with multiple build targets
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
