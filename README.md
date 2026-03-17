@@ -117,12 +117,12 @@ setup.py / pyproject.toml# Python package build metadata
 ```bash
 mkdir -p data
 python3 src/python/train.py
-python3 src/python/export_weights.py && test -f iris_weights.bin && mv -v iris_weights.bin data/
+python3 src/python/export_weights.py && { test -f iris_weights.bin && mv -v iris_weights.bin data/ || echo "iris_weights.bin already in data/"; }
 
 python3 src/python/train_mnist.py
-python3 src/python/export_mnist.py && test -f mnist_weights.bin && mv -v mnist_weights.bin data/
+python3 src/python/export_mnist.py && { test -f mnist_weights.bin && mv -v mnist_weights.bin data/ || echo "mnist_weights.bin already in data/"; }
 ```
-The export scripts write their `.bin` files to the current working directory; the commands above explicitly check for the file and move it into `data/` so inference and tests can find it, surfacing any missing file immediately.
+The export scripts write their `.bin` files to the current working directory by default; the commands above move them into `data/` (or skip the move if the file is already there) so inference and tests can find them. If you change the scripts to emit directly into `data/`, you can drop the move step entirely.
 
 **Compile and run:**
 ```bash
