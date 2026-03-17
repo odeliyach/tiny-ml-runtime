@@ -10,6 +10,33 @@ permissions:
   contents: read
 
 jobs:
+  lint-and-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linting tools
+        run: pip install flake8
+
+      - name: Run flake8 Python linter
+        run: |
+          echo "=== Python Linting with flake8 ==="
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Check C code formatting
+        run: |
+          echo "=== C Code Formatting Check ==="
+          sudo apt-get update && sudo apt-get install -y clang-format
+          # Check if C files conform to standard formatting (non-blocking)
+          echo "Running clang-format check on C files..."
+          find . -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror || echo "Note: C files could benefit from formatting improvements"
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:
