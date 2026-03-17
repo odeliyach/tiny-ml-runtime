@@ -1,6 +1,10 @@
 # Tiny ML Runtime in C
 ## Technical Stack
-`C (C11)` | `Python` | `PyTorch` | `Docker` | `GitHub Actions`
+- `C (C11)`
+- `Python`
+- `PyTorch`
+- `Docker`
+- `GitHub Actions`
 
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -118,13 +122,11 @@ setup.py / pyproject.toml# Python package build metadata
 mkdir -p data
 python3 src/python/train.py
 python3 src/python/export_weights.py
-mv -v iris_weights.bin data/
 
 python3 src/python/train_mnist.py
 python3 src/python/export_mnist.py
-mv -v mnist_weights.bin data/
 ```
-The export scripts write their `.bin` files to the current working directory by default; move them into `data/` so inference and tests can find them. If you update the scripts to emit directly into `data/`, you can drop the move step entirely.
+The export scripts now write their `.bin` files directly into `data/`, so inference and tests can find them immediately.
 
 **Compile and run:**
 ```bash
