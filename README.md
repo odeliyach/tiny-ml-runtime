@@ -1,5 +1,6 @@
 # Tiny ML Runtime in C
-Technical Stack: C (C11) | Python | PyTorch | Docker | GitHub Actions
+## Technical Stack
+C (C11) | Python | PyTorch | Docker | GitHub Actions
 
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
