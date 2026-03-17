@@ -24,7 +24,7 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 10,596          | 94.374 seconds       |
 | **Speedup (C vs PyTorch)** | **≈258×**      |                      |
 
-> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized to parity and PyTorch overtakes.
+> The 258× figure measures Python + PyTorch dispatch overhead on a 4-feature input, not PyTorch's raw compute. Once you batch (dozens or more samples) or run on GPU kernels, that overhead is amortized and reaches parity; PyTorch then overtakes.
 
 ### MNIST (784 → 128 → 10) — compute-bound
 | Runtime                  | Predictions/sec | Time (100K iterations) |
@@ -33,12 +33,13 @@ Compact neural-network inference engine in pure C, wired to a CPython extension 
 | PyTorch (Python, batch=1)| 22,502          | 0.444 seconds          |
 | **Speedup (PyTorch vs C)** | **~5×**        |                |
 
-**Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over. (Arrows denote layer flow; × denotes matrix dimensions.)
+**Crossover point:** Iris is dominated by Python/C++ dispatch overhead, so the C path wins. MNIST is dominated by the 128×784 matmul (~100K FLOPs) where PyTorch leans on BLAS/SIMD and beats the naive C loops. Overhead matters only until math takes over.
 
 ## System Architecture & Layout
 ```
 Input → Linear → ReLU → ... → Linear → Softmax
 ```
+- Legend: arrows (`→`) show layer/data flow; matrix dimensions use `×`.
 - **src/c/inference.c**: core forward path (linear, ReLU, softmax), weight loader, benchmark.
 - **src/c/inference_module.c**: CPython extension exposing `tinymlinference.predict()`.
 - **src/c/test_inference.c**: unit tests for math, stability, scaling, and end-to-end predictions.
