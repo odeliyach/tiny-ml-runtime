@@ -1,6 +1,6 @@
 # Tiny ML Runtime in C
 ## Technical Stack
-C (C11) | Python | PyTorch | Docker | GitHub Actions
+`C (C11)` | `Python` | `PyTorch` | `Docker` | `GitHub Actions`
 
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -113,7 +113,7 @@ setup.py / pyproject.toml# Python package build metadata
 
 ## Run it yourself
 
-**Train and export:**
+**Train and export** (from the repo root so the generated binaries land in `data/`):
 ```bash
 mkdir -p data
 python3 src/python/train.py
