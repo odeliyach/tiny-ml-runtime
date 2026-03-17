@@ -6,10 +6,10 @@ LDFLAGS = -lm
 
 all: inference
 
-inference: inference.c
+inference: src/c/inference.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
-test_inference: test_inference.c
+test_inference: src/c/test_inference.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 test: test_inference
