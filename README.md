@@ -5,7 +5,8 @@
 [![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language](https://img.shields.io/badge/Language-C-blue.svg)]()
-
+[![Code Coverage](https://img.shields.io/badge/coverage-placeholder-pink)](https://github.com/odeliyach/tiny-ml-runtime)
+[![Linting](https://img.shields.io/badge/linting-placeholder-purple)](https://github.com/odeliyach/tiny-ml-runtime)
 </div>
 
 ## Technical Stack
