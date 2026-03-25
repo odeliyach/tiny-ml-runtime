@@ -189,3 +189,12 @@ I wanted to see exactly what PyTorch does under the hood, so I wrote the inferen
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+---
+<div align="center">
+
+Built by **Odeliya Charitonova** · [GitHub](https://github.com/odeliyach) · [LinkedIn](https://linkedin.com/in/odeliya-charitonova)
+
+*Computer Science student @ Tel Aviv University, School of CS & AI*
+
+</div>
