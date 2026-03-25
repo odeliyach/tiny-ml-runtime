@@ -173,6 +173,17 @@ class_idx, probs = tinymlinference.predict("data/iris_weights.bin", [5.1, 3.5, 1
 print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 ```
 
+## Quality Assurance & Testing 🛠️
+This project prioritizes reliability and performance through a robust testing infrastructure:
+Multi-Layer Testing:
+
+C Core: Unit tests using the Unity framework, covering low-level matrix operations, activation functions (ReLU, Softmax), and memory management.
+Python Wrapper: Integration tests using Pytest to ensure seamless communication between Python and the C shared library.
+
+Continuous Integration (CI): Every push triggers an automated GitHub Actions workflow that builds the C source, runs the entire test suite, and performs memory leak checks.
+
+Coverage Analytics: Test effectiveness is monitored via Codecov. Currently, 100% of the mathematical core and inference logic is covered, ensuring high confidence in model predictions.
+
 ## Why I built this
 
 I wanted to see exactly what PyTorch does under the hood, so I wrote the inference path myself in C — matrix multiplication, ReLU, Softmax, the full forward pass. Building it from scratch made the tradeoffs obvious: on tiny, batch=1 networks the Python dispatch path dominates (C wins by 258x), but on MNIST the optimized BLAS/SIMD back-end in PyTorch beats my naive loops by 5x. That crossover — where overhead yields to raw computation — is the insight I was chasing.
