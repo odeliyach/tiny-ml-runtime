@@ -4,23 +4,7 @@
 #include <time.h>
 #include <string.h>
 
-#define MAX_LAYERS 10
-
-// Generic network — works for any architecture.
-// Example Iris:  num_layers=3, layer_sizes=[4, 8, 3]
-// Example MNIST: num_layers=3, layer_sizes=[784, 128, 10]
-typedef struct {
-    int   num_layers;
-    int   layer_sizes[MAX_LAYERS];
-    float *weights[MAX_LAYERS];  // dynamically allocated
-    float *biases[MAX_LAYERS];
-    // optional normalization (StandardScaler)
-    // has_scaler=1 means we must normalize input before forward pass
-    // has_scaler=0 means input goes in raw (e.g. MNIST)
-    int   has_scaler;
-    float scaler_mean[MAX_LAYERS];
-    float scaler_std[MAX_LAYERS];
-} Network;
+#include "inference.h"
 
 /**
  * Loads neural network weights from a binary file.
@@ -38,6 +22,7 @@ typedef struct {
 int load_weights(Network *net, const char *filename) {
     FILE *f = fopen(filename, "rb");
     if (!f) { printf("Error: could not open %s\n", filename); return 0; }
+    memset(net, 0, sizeof(*net));
 
     // First: read architecture
     // e.g. [3, 4, 8, 3] means 3 layers of sizes 4, 8, 3
@@ -53,6 +38,7 @@ int load_weights(Network *net, const char *filename) {
     }
 
     // For each pair of adjacent layers, load weights and biases
+    int layers_allocated = 0;
     for (int i = 0; i < net->num_layers - 1; i++) {
         int rows = net->layer_sizes[i + 1];
         int cols = net->layer_sizes[i];
@@ -64,19 +50,20 @@ int load_weights(Network *net, const char *filename) {
         if (!net->weights[i] || !net->biases[i]) {
             fclose(f);
             printf("Error: memory allocation failed\n");
-            return 0;
+            goto cleanup_fail;
         }
 
         if (fread(net->weights[i], sizeof(float), rows * cols, f) != (size_t)(rows * cols)) {
             fclose(f);
             printf("Error: failed to read weights for layer %d\n", i);
-            return 0;
+            goto cleanup_fail;
         }
         if (fread(net->biases[i], sizeof(float), rows, f) != (size_t)rows) {
             fclose(f);
             printf("Error: failed to read biases for layer %d\n", i);
-            return 0;
+            goto cleanup_fail;
         }
+        layers_allocated++;
     }
 
     // Try to load scaler — if present in file (Iris has it, MNIST doesn't)
@@ -86,7 +73,7 @@ int load_weights(Network *net, const char *filename) {
         if (fread(net->scaler_std, sizeof(float), input_size, f) != (size_t)input_size) {
             fclose(f);
             printf("Error: failed to read scaler_std\n");
-            return 0;
+            goto cleanup_fail;
         }
         net->has_scaler = 1;
     } else {
@@ -95,6 +82,16 @@ int load_weights(Network *net, const char *filename) {
 
     fclose(f);
     return 1;
+
+cleanup_fail:
+    for (int j = 0; j < layers_allocated; j++) {
+        free(net->weights[j]);
+        free(net->biases[j]);
+        net->weights[j] = NULL;
+        net->biases[j] = NULL;
+    }
+    net->num_layers = 0;
+    return 0;
 }
 
 // Free all dynamically allocated weight memory
@@ -213,7 +210,7 @@ int predict(Network *net, float *input, int verbose) {
     // The weights were trained on scaled data, so we MUST scale here too.
     // If we skip this, we're feeding the network numbers it has never seen.
     // MNIST doesn't need this — handled differently during training.
-    float normalized[784];  // 784 is max input size (MNIST)
+    float normalized[MAX_FEATURES];  // MAX_FEATURES is the max input size
     if (net->has_scaler) {
         for (int i = 0; i < net->layer_sizes[0]; i++)
             normalized[i] = (input[i] - net->scaler_mean[i]) / net->scaler_std[i];
@@ -284,6 +281,7 @@ void benchmark(Network *net, float *sample_input, int iterations) {
     printf("Predictions/sec:  %.0f\n", iterations / seconds);
 }
 
+#ifndef TINY_ML_INFERENCE_NO_MAIN
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -330,3 +328,4 @@ int main(int argc, char *argv[]) {
     free_network(&net);
     return 0;
 }
+#endif
