@@ -35,7 +35,7 @@ jobs:
       - name: Capture C coverage (lcov)
         run: |
           lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info "/usr/*" --output-file coverage.info
+          lcov --remove coverage.info "/usr/*" --output-file coverage.info --ignore-errors unused
           lcov --list coverage.info
 
       - name: Install package
