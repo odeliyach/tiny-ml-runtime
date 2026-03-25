@@ -15,7 +15,7 @@
 - `Docker`
 - `GitHub Actions`
 
-**Zero-dependency neural network inference engine in pure C** — demonstrating systems programming, memory management, and Python-C integration.
+**Zero-dependency neural network inference engine in pure C** , demonstrating systems programming, memory management, and Python-C integration.
 
 Train in Python (PyTorch) → Export weights → Run blazing-fast inference in C.
 **258x faster** than PyTorch on small networks, revealing exactly where framework overhead matters.
@@ -53,8 +53,8 @@ C++ dispatch overhead on every call. C has zero overhead, so it wins by a wide m
 
 On **MNIST (784 inputs)**, the dominant cost is the `W1` matrix multiply: 128 × 784 = ~100K
 multiply-add operations per prediction. PyTorch calls into optimized BLAS (OpenBLAS / Accelerate)
-with SIMD vectorization. Our C code uses naive nested loops — no SIMD, no cache tiling,
-no parallelism — so PyTorch wins here.
+with SIMD vectorization. Our C code uses naive nested loops - no SIMD, no cache tiling,
+no parallelism -so PyTorch wins here.
 
 **The crossover point is the real insight:** it reveals exactly where framework overhead ends
 and where raw computation begins. A C implementation is only faster than PyTorch when
@@ -184,7 +184,7 @@ Multi-Layer Testing:
 
 ## Why I built this
 
-I wanted to see exactly what PyTorch does under the hood, so I wrote the inference path myself in C — matrix multiplication, ReLU, Softmax, the full forward pass. Building it from scratch made the tradeoffs obvious: on tiny, batch=1 networks the Python dispatch path dominates (C wins by 258x), but on MNIST the optimized BLAS/SIMD back-end in PyTorch beats my naive loops by 5x. That crossover — where overhead yields to raw computation — is the insight I was chasing.
+I wanted to see exactly what PyTorch does under the hood, so I wrote the inference path myself in C — matrix multiplication, ReLU, Softmax, the full forward pass. Building it from scratch made the tradeoffs obvious: on tiny, batch=1 networks the Python dispatch path dominates (C wins by 258x), but on MNIST the optimized BLAS/SIMD back-end in PyTorch beats my naive loops by 5x. That crossover where overhead yields to raw computation ,is the insight I was chasing.
 
 ## License
 
