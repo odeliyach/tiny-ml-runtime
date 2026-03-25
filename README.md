@@ -1,13 +1,19 @@
+<div align="center">
+
 # Tiny ML Runtime in C
+
+[![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Language](https://img.shields.io/badge/Language-C-blue.svg)]()
+
+</div>
+
 ## Technical Stack
 - `C (C11)`
 - `Python`
 - `PyTorch`
 - `Docker`
 - `GitHub Actions`
-
-[![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Zero-dependency neural network inference engine in pure C** — demonstrating systems programming, memory management, and Python-C integration.
 
