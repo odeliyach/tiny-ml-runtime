@@ -19,7 +19,8 @@
 
 /* ── Inline copy of the inference engine ─────────────────────────── */
 
-#define MAX_LAYERS 10
+#define MAX_LAYERS   10
+#define MAX_FEATURES 784
 
 typedef struct {
     int   num_layers;
@@ -27,10 +28,8 @@ typedef struct {
     float *weights[MAX_LAYERS];
     float *biases[MAX_LAYERS];
     int   has_scaler;
-    /* scaler arrays: one entry per input feature (capped at MAX_LAYERS).
-     * Networks with input_size > MAX_LAYERS and a scaler are not supported. */
-    float scaler_mean[MAX_LAYERS];
-    float scaler_std[MAX_LAYERS];
+    float scaler_mean[MAX_FEATURES];
+    float scaler_std[MAX_FEATURES];
 } Network;
 
 static int load_weights(Network *net, const char *filename)
@@ -56,8 +55,8 @@ static int load_weights(Network *net, const char *filename)
     }
 
     int input_size = net->layer_sizes[0];
-    /* scaler arrays are bounded by MAX_LAYERS; skip scaler for large inputs */
-    if (input_size <= MAX_LAYERS) {
+    /* scaler arrays are bounded by MAX_FEATURES; skip scaler for large inputs */
+    if (input_size <= MAX_FEATURES) {
         size_t n = fread(net->scaler_mean, sizeof(float), input_size, f);
         if (n == (size_t)input_size) {
             if (fread(net->scaler_std, sizeof(float), input_size, f)

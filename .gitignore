@@ -2,8 +2,15 @@
 inference
 inference.exe
 test_inference
+tests/c/test_inference_unity
 *.o
 *.out
+*.gcno
+*.gcda
+coverage.info
+.coverage
+htmlcov/
+coverage/
 
 # Data files (too large for version control)
 data/

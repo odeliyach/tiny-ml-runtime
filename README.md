@@ -2,11 +2,10 @@
 
 # Tiny ML Runtime in C
 
-[![CI](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
+[![Build Status](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language](https://img.shields.io/badge/Language-C-blue.svg)]()
-[![Code Coverage](https://img.shields.io/badge/coverage-placeholder-pink)](https://github.com/odeliyach/tiny-ml-runtime)
-[![Linting](https://img.shields.io/badge/linting-placeholder-purple)](https://github.com/odeliyach/tiny-ml-runtime)
+[![Coverage](https://codecov.io/gh/odeliyach/tiny-ml-runtime/branch/main/graph/badge.svg)](https://codecov.io/gh/odeliyach/tiny-ml-runtime)
 </div>
 
 ## Technical Stack
@@ -144,7 +143,15 @@ make                         # build inference engine
 
 **Run tests:**
 ```bash
-make test       # build and run unit tests
+make c_tests    # build + run Unity + legacy C tests
+pytest          # run Python wrapper tests (requires `pip install -e .`)
+```
+
+**Coverage (local):**
+```bash
+COVERAGE=1 make c_tests
+lcov --capture --directory . --output-file coverage.info
+pytest --cov=tinymlinference --cov=src/python --cov-report=xml
 ```
 
 **Docker:**

@@ -10,28 +10,56 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  tests-and-coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build inference engine
-        run: make inference
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-      - name: Build and run tests
-        run: make test
-
-      - name: Run Iris benchmark
+      - name: Install test dependencies
         run: |
-          echo "=== Iris Benchmark ==="
-          ./inference iris | tee iris_benchmark.txt
-          grep "Predictions/sec" iris_benchmark.txt
+          sudo apt-get update
+          sudo apt-get install -y lcov
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-cov
 
-      - name: Upload benchmark results
+      - name: Build and run C tests (Unity + legacy)
+        env:
+          COVERAGE: 1
+        run: make clean && make c_tests
+
+      - name: Capture C coverage (lcov)
+        run: |
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info "/usr/*" --output-file coverage.info --ignore-errors unused
+          lcov --list coverage.info
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Run Python tests with coverage
+        run: |
+          pytest --cov=tinymlinference --cov=src/python --cov-report=xml --cov-report=term
+
+      - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
-          path: iris_benchmark.txt
+          name: coverage-reports
+          path: |
+            coverage.info
+            coverage.xml
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.info,coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
 
   docker:
     runs-on: ubuntu-latest
@@ -43,16 +71,3 @@ jobs:
 
       - name: Run inference in Docker
         run: docker run --rm tiny-ml-runtime
-
-  python-package:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Build Python extension
-        run: pip install .
