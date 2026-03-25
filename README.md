@@ -177,10 +177,10 @@ print(class_idx, probs)  # 0  [1.0, 0.0, 0.0]
 This project prioritizes reliability and performance through a robust testing infrastructure:
 Multi-Layer Testing:
 
--'C Core: Unit tests using the Unity framework, covering low-level matrix operations, activation functions (ReLU, Softmax), and memory management.'
--'Python Wrapper: Integration tests using Pytest to ensure seamless communication between Python and the C shared library.'
--'Continuous Integration (CI): Every push triggers an automated GitHub Actions workflow that builds the C source, runs the entire test suite, and performs memory leak checks.'
--'Coverage Analytics: Test effectiveness is monitored via Codecov. Currently, 100% of the mathematical core and inference logic is covered, ensuring high confidence in model predictions.'
+- **C Core:** Unit tests using the Unity framework, covering low-level matrix operations, activation functions (ReLU, Softmax), and memory management.
+- **Python Wrapper:** Integration tests using Pytest to ensure seamless communication between Python and the C shared library.
+- **Continuous Integration (CI):** Every push triggers an automated GitHub Actions workflow that builds the C source, runs the entire test suite, and performs memory leak checks.
+- **Coverage Analytics:** Test effectiveness is monitored via Codecov. Currently, 100% of the mathematical core and inference logic is covered, ensuring high confidence in model predictions.'
 
 ## Why I built this
 
