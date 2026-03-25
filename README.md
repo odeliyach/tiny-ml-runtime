@@ -4,7 +4,7 @@
 
 [![Build Status](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/odeliyach/tiny-ml-runtime/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Language](https://img.shields.io/badge/Language-C-blue.svg)]()
+[![Language](https://img.shields.io/badge/Language-C%20%2F%20Python-blue.svg)](https://github.com/odeliyach/tiny-ml-runtime)
 [![Coverage](https://codecov.io/gh/odeliyach/tiny-ml-runtime/branch/main/graph/badge.svg)](https://codecov.io/gh/odeliyach/tiny-ml-runtime)
 </div>
 
